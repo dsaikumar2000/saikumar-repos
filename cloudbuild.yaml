@@ -32,19 +32,23 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
+      # Move into infra folder
+      - name: Change to infra directory
+        run: cd infra
+
       # Initialize Terraform
       - name: Terraform Init
-        run: terraform init
+        run: terraform -chdir=infra init
 
       # Validate Terraform code
       - name: Terraform Validate
-        run: terraform validate
+        run: terraform -chdir=infra validate
 
       # Plan Terraform changes
       - name: Terraform Plan
-        run: terraform plan -input=false
+        run: terraform -chdir=infra plan -input=false
 
       # Apply Terraform changes (only on push to main)
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
-        run: terraform apply -auto-approve -input=false
+        run: terraform -chdir=infra apply -auto-approve -input=false
