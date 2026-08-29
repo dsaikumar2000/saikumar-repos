@@ -1,54 +1,44 @@
-name: Terraform CI/CD for GCP
+steps:
+  # Step 1: Install Terraform
+  - name: hashicorp/terraform:1.6.0
+    id: terraform-init
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        cd infra
+        terraform init
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
+  # Step 2: Validate Terraform
+  - name: hashicorp/terraform:1.6.0
+    id: terraform-validate
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        cd infra
+        terraform validate
 
-jobs:
-  terraform:
-    runs-on: ubuntu-latest
+  # Step 3: Plan Terraform
+  - name: hashicorp/terraform:1.6.0
+    id: terraform-plan
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        cd infra
+        terraform plan -input=false
 
-    env:
-      GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
-      GOOGLE_CLOUD_KEYFILE_JSON: ${{ secrets.GCP_SA_KEY }}
-      TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+  # Step 4: Apply Terraform (optional, usually gated)
+  - name: hashicorp/terraform:1.6.0
+    id: terraform-apply
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        cd infra
+        terraform apply -auto-approve -input=false
 
-    steps:
-      # Checkout repo
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # Setup Terraform
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.6.0
-
-      # Authenticate with GCP
-      - name: Authenticate to GCP
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      # Move into infra folder
-      - name: Change to infra directory
-        run: cd infra
-
-      # Initialize Terraform
-      - name: Terraform Init
-        run: terraform -chdir=infra init
-
-      # Validate Terraform code
-      - name: Terraform Validate
-        run: terraform -chdir=infra validate
-
-      # Plan Terraform changes
-      - name: Terraform Plan
-        run: terraform -chdir=infra plan -input=false
-
-      # Apply Terraform changes (only on push to main)
-      - name: Terraform Apply
-        if: github.ref == 'refs/heads/main'
-        run: terraform -chdir=infra apply -auto-approve -input=false
+# Optional: specify logs bucket or artifacts
+options:
+  logging: CLOUD_LOGGING_ONLY
