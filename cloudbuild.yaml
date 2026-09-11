@@ -22,7 +22,7 @@ steps:
   # Step 3: Plan Terraform
   - name: hashicorp/terraform:1.6.0
     id: terraform-plan
-    entrypoint: sh
+    entrypoint: 
     args:
       - -c
       - |
